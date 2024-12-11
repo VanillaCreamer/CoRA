@@ -1,7 +1,5 @@
 # CoRA: Collaborative Information Perception by Large Language Model's Weights for Recommendation
 
-[Yuting Liu](https://vanillacreamer.github.io/), Jinghao Zhang, Yizhou Dang, Yuliang Liang, Qiang Liu, Guibing Guo, Jianzhe Zhao and Xingwei Wang. 
-
 This repository contains the replication of the AAAI 2025 paper [CoRA: Collaborative Information Perception by Large Language Model's Weights for Recommendation](https://arxiv.org/abs/2408.10645).
 
 
