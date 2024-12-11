@@ -16,7 +16,7 @@ class PerceptualWeightsGenerator(nn.Module):
         self.hidden_size = hidden_size
 
         self.qformer, self.query_tokens = self._init_qformer()
-        self.final = nn.Linear(user_embedding_size * 2, 2 * hidden_size * r)
+        self.final = nn.Linear(user_embedding_size * 2, hidden_size * r)
         nn.init.kaiming_uniform_(self.final.weight, a=math.sqrt(5))
 
     def _init_qformer(self):

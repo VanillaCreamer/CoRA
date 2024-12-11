@@ -38,7 +38,7 @@ Then, set the path to the Vicuna weight in the `"llama_model" ` field of a train
 
 **3. Prepare the Datasets**
 
-You can process the data yourself using the code provided in the ```./dataset``` directory. Alternatively, you can download the pre-processed data from [here](collm-datasets/).
+You can process the data yourself using the code provided in the ```./dataset``` directory.
 
 
 

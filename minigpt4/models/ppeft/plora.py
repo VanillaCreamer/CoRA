@@ -82,8 +82,6 @@ class PLoraLayer(BaseTunerLayer):
         # self.lora_A = nn.ModuleDict({})
         # self.lora_B = nn.ModuleDict({})
         self.lora_P = nn.ModuleDict({})
-        self.lora_U = nn.ModuleDict({})
-        self.lora_I = nn.ModuleDict({})
         # Mark the weight as unmerged
         self.merged = False
         self.disable_adapters = False
@@ -105,8 +103,6 @@ class PLoraLayer(BaseTunerLayer):
             # self.lora_A.update(nn.ModuleDict({adapter_name: nn.Linear(self.in_features, r, bias=False)}))
             # self.lora_B.update(nn.ModuleDict({adapter_name: nn.Linear(r, self.out_features, bias=False)}))
             self.lora_P.update(nn.ModuleDict({adapter_name: nn.Linear(r, self.out_features, bias=False)}))
-            self.lora_U.update(nn.ModuleDict({adapter_name: nn.Linear(r, self.out_features, bias=False)}))
-            self.lora_I.update(nn.ModuleDict({adapter_name: nn.Linear(r, self.out_features, bias=False)}))
             self.scaling[adapter_name] = lora_alpha / r
         if init_lora_weights:
             self.reset_lora_parameters(adapter_name)
@@ -118,8 +114,6 @@ class PLoraLayer(BaseTunerLayer):
             # nn.init.kaiming_uniform_(self.lora_A[adapter_name].weight, a=math.sqrt(5))
             # nn.init.zeros_(self.lora_B[adapter_name].weight)
             nn.init.zeros_(self.lora_P[adapter_name].weight)
-            nn.init.zeros_(self.lora_U[adapter_name].weight)
-            nn.init.zeros_(self.lora_I[adapter_name].weight)
 
 
 # class PLoraModel(torch.nn.Module):
@@ -700,34 +694,11 @@ class Linear(nn.Linear, PLoraLayer):
 
             x = x.to(self.lora_P[self.active_adapter].weight.dtype)
 
-            # result += (
-            #         self.lora_B[self.active_adapter](
-            #             self.lora_A[self.active_adapter](self.lora_dropout[self.active_adapter](x))
-            #         )
-            #         * self.scaling[self.active_adapter]
-            # )
-            # if weight is not None:
-            #     result += (
-            #             self.lora_P[self.active_adapter](
-            #                 torch.bmm(self.lora_dropout[self.active_adapter](x), weight)
-            #             )
-            #             * self.scaling[self.active_adapter]
-            #     )
             if weight is not None:
                 result += (
-                        self.lora_U[self.active_adapter](
-                            torch.bmm(self.lora_dropout[self.active_adapter](x), user)
+                        self.lora_P[self.active_adapter](
+                            torch.bmm(self.lora_dropout[self.active_adapter](x), weight)
                         )
-                        * self.scaling[self.active_adapter]
-                )
-                result += (
-                        self.lora_I[self.active_adapter](
-                            torch.bmm(self.lora_dropout[self.active_adapter](x), item)
-                        )
-                        * self.scaling[self.active_adapter]
-                )
-                result += (
-                        torch.bmm(self.lora_dropout[self.active_adapter](x), user) @ item.t()
                         * self.scaling[self.active_adapter]
                 )
         else:

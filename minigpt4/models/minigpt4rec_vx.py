@@ -117,7 +117,7 @@ class MiniGPT4Rec_vx(Rec2Base):
                 bias="none",
                 task_type="CAUSAL_LM",
                 user_embedding_size=self.rec_encoder.config.embedding_size,
-                num_queries=1,
+                num_queries=4,
             )
             self.llama_model_lora = get_peft_model(self.llama_model, peft_config)
             print("Setting Lora Done")
@@ -147,65 +147,6 @@ class MiniGPT4Rec_vx(Rec2Base):
             self.prompt_list = []
             self.prompt_list_p = None
 
-        # Initialize projection
-        # if self.rec_encoder is not None and 'prompt' not in rec_model:
-        #     print("type:", type(proj_mid), proj_mid)
-        #     self.llama_proj = nn.Sequential(
-        #         nn.Linear(self.rec_encoder.config.embedding_size,
-        #                   self.rec_encoder.config.embedding_size * int(proj_mid)),  # ml100=>5
-        #         nn.ReLU(),
-        #         # nn.Dropout(proj_drop),
-        #         nn.Linear(self.rec_encoder.config.embedding_size * int(proj_mid),
-        #                   self.llama_model.config.hidden_size * self.proj_token_num),
-        #     )
-        #     self.bias_proj = nn.Sequential(
-        #         nn.Linear(self.rec_encoder.config.embedding_size,
-        #                   self.rec_encoder.config.embedding_size * int(proj_mid)),  # ml100=>5
-        #         nn.ReLU(),
-        #         # nn.Dropout(proj_drop),
-        #         nn.Linear(self.rec_encoder.config.embedding_size * int(proj_mid),
-        #                   self.llama_model.config.hidden_size * self.proj_token_num),
-        #     )
-        #     # self.llama_proj = nn.Linear(self.rec_encoder.config.embedding_size, self.llama_model.config.hidden_size * self.proj_token_num)
-        # elif self.rec_encoder is not None and rec_model == "personlized_prompt":  # 'prompt' in rec_model:
-        #     # identical mapping function, i.e., f(x)=x
-        #     print("personalized prompt learning....")
-        #     self.llama_proj = nn.Linear(rec_config.item_num + rec_config.user_num,
-        #                                 self.llama_model.config.hidden_size * self.proj_token_num,
-        #                                 bias=False)  # identical_map()
-        # elif self.rec_encoder is not None and rec_model == "soft_prompt":  # 'prompt' in rec_model:
-        #     # identical mapping function, i.e., f(x)=x
-        #     print("soft prompt learning....")
-        #     self.llama_proj = nn.Linear(2, self.llama_model.config.hidden_size * self.proj_token_num,
-        #                                 bias=False)  # identical_map()
-        # else:
-        #     self.llama_proj = None
-        #
-        # if freeze_proj:
-        #     for name, param in self.llama_proj.named_parameters():
-        #         param.requires_grad = False
-        #     self.llama_proj = self.llama_proj.eval()
-        #     self.llama_proj.train = disabled_train
-        #     logging.info("!!!! freeze llama_proj...")
-        #
-        # if hasattr(self.rec_encoder, 'user_bias'):
-        #     self.bias_encoder = self.rec_encoder
-        #     print('load bias in rec encoder.')
-        # else:
-        #     self.bias_encoder = self.init_bias_encoder(rec_config)
-        #     print('create new bias encoder.')
-        #     if freeze_bias:
-        #         for name, param in self.bias_encoder.named_parameters():
-        #             param.requires_grad = False
-        #         self.bias_encoder = self.bias_encoder.eval()
-        #         self.bias_encoder.train = disabled_train
-        #     print("!!!! freeze bias encoder...")
-        # if freeze_bias:
-        #     for name, param in self.bias_proj.named_parameters():
-        #         param.requires_grad = False
-        #     self.bias_proj = self.bias_proj.eval()
-        #     self.bias_proj.train = disabled_train
-        #     logging.info("!!!! freeze bias_proj...")
 
     def to_be_trained(self):
         if self.use_lora:
@@ -339,9 +280,6 @@ class MiniGPT4Rec_vx(Rec2Base):
                 idx_flag = torch.cat(idx_flag, dim=1).to(device)
                 idx_nopad = torch.nonzero(idx_flag)
 
-                # atts_user = torch.ones(user_embeds_llama.size()[:-1], dtype=torch.long).to(device)
-                # atts_targetItem = torch.ones(targetItem_embeds_llama.size()[:-1], dtype=torch.long).to(device)
-                # atts_interactedItem =  torch.ones(interactedItem_embeds_llama.size()[:-1], dtype=torch.long).to(device)
 
                 # adding consitence loss
 
@@ -618,11 +556,7 @@ class MiniGPT4Rec_vx(Rec2Base):
         # ***Note: here, for sasrec, item embedding comes form the last layer
         item_embedding = self.rec_encoder.item_encoder(samples['TargetItemID'], all_items=all_item_embeds)
 
-        # all_user_embeds, all_item_embeds = self.rec_encoder.computer()
-        # user_embedding = self.rec_encoder.user_encoder(samples['UserID'], all_users=all_user_embeds)  # .unsqueeze(-2)
-        # item_embedding = self.rec_encoder.item_encoder(samples['TargetItemID'], all_items=all_item_embeds)
         ui_embedding = torch.cat([user_embedding, item_embedding], dim=-1)
-        # ui_embedding = torch.cat([user_embedding, user_embedding], dim=-1)
 
         self.llama_tokenizer.padding_side = "right"
         device = samples['UserID'].device  # samples_encode['User_emb'].device
